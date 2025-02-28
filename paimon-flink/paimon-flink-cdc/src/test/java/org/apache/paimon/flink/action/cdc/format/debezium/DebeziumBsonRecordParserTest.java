@@ -34,8 +34,12 @@ import org.apache.paimon.shade.jackson2.com.fasterxml.jackson.databind.JsonNode;
 import org.apache.paimon.shade.jackson2.com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.paimon.shade.jackson2.com.fasterxml.jackson.databind.node.TextNode;
 
+import org.apache.flink.connector.pulsar.source.reader.deserializer.PulsarDeserializationSchema;
 import org.apache.flink.streaming.connectors.kafka.KafkaDeserializationSchema;
+import org.apache.flink.util.Collector;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.pulsar.client.impl.MessageImpl;
+import org.apache.pulsar.common.api.proto.MessageMetadata;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
@@ -52,6 +56,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 /** Test for DebeziumBsonRecordParser. */
 public class DebeziumBsonRecordParserTest {
@@ -67,6 +72,7 @@ public class DebeziumBsonRecordParserTest {
     private static Map<String, String> keyEvent = new HashMap<>();
 
     private static KafkaDeserializationSchema<CdcSourceRecord> kafkaDeserializationSchema = null;
+    private static PulsarDeserializationSchema<CdcSourceRecord> pulsarDeserializationSchema = null;
 
     private static Map<String, String> beforeEvent = new HashMap<>();
 
@@ -76,6 +82,7 @@ public class DebeziumBsonRecordParserTest {
     public static void beforeAll() throws Exception {
         DataFormat dataFormat = new DebeziumBsonDataFormatFactory().create();
         kafkaDeserializationSchema = dataFormat.createKafkaDeserializer(null);
+        pulsarDeserializationSchema = dataFormat.createPulsarDeserializer(null);
 
         keyEvent.put("_id", "67ab25755c0d5ac87eb8c632");
 
@@ -131,6 +138,9 @@ public class DebeziumBsonRecordParserTest {
             } else {
                 // test kafka deserialization
                 records.add(deserializeKafkaSchema(key, json));
+
+                // test pulsar deserialization
+                records.add(deserializePulsarSchema(key, json));
                 key = null;
             }
         }
@@ -263,5 +273,28 @@ public class DebeziumBsonRecordParserTest {
             throws Exception {
         return kafkaDeserializationSchema.deserialize(
                 new ConsumerRecord<>("topic", 0, 0, key.getBytes(), value.getBytes()));
+    }
+
+    private static CdcSourceRecord deserializePulsarSchema(String key, String value)
+            throws Exception {
+        AtomicReference<CdcSourceRecord> result = new AtomicReference<>(null);
+
+        MessageMetadata messageMetadata = new MessageMetadata();
+        messageMetadata.setPartitionKey(key);
+        MessageImpl message =
+                new MessageImpl(
+                        "topic", "0:0", new HashMap<>(), value.getBytes(), null, messageMetadata);
+        pulsarDeserializationSchema.deserialize(
+                message,
+                new Collector<CdcSourceRecord>() {
+                    @Override
+                    public void collect(CdcSourceRecord cdcSourceRecord) {
+                        result.set(cdcSourceRecord);
+                    }
+
+                    @Override
+                    public void close() {}
+                });
+        return result.get();
     }
 }
