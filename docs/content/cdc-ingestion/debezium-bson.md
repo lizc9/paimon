@@ -27,7 +27,7 @@ under the License.
 # Debezium BSON Format
 
 
-The debezium-bson format is one of the formats supported by <a href="{{< ref "/cdc-ingestion/kafka-cdc" >}}">Kafka CDC</a>.
+The debezium-bson format is one of the formats supported by <a href="{{< ref "/cdc-ingestion/kafka-cdc" >}}">Kafka CDC</a> and <a href="{{< ref "/cdc-ingestion/pulsar-cdc" >}}">Pulsar CDC</a>.
 It is the format obtained by collecting mongodb through debezium, which is similar to 
 <a href="https://nightlies.apache.org/flink/flink-docs-stable/docs/connectors/table/formats/debezium/">debezium-json</a> format.
 However, MongoDB does not have a fixed schema, and the field types of each document may be different, so the before/after fields
@@ -47,7 +47,7 @@ bson-*.jar
 {{< hint info >}}
 The debezium bson format requires insert/update/delete event messages include the full document, and include a field that represents the state of the document before the change.
 This requires setting debezium's capture.mode to change_streams_update_full_with_pre_image and [capture.mode.full.update.type](https://debezium.io/documentation/reference/stable/connectors/mongodb.html#mongodb-property-capture-mode-full-update-type) to post_image.
-Before version 6.0 of MongoDB, it was not possible to obtain 'Update Before' information. Therefore, using the id field in the Kafka Key as 'Update before' information
+Before version 6.0 of MongoDB, it was not possible to obtain 'Update Before' information. Therefore, using the id field in the Kafka/Pulsar Key as 'Update before' information
 {{< /hint >}}
 
 Here is a simple example for an update operation captured from a Mongodb customers collection in JSON format:

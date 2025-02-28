@@ -23,18 +23,19 @@ import org.apache.paimon.flink.action.cdc.serialization.ConfluentAvroDeserializa
 
 import io.confluent.kafka.serializers.GenericContainerWithVersion;
 import org.apache.avro.generic.GenericRecord;
-import org.apache.flink.api.common.serialization.DeserializationSchema;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.configuration.Configuration;
-
-import java.io.IOException;
+import org.apache.flink.connector.pulsar.source.config.SourceConfiguration;
+import org.apache.flink.connector.pulsar.source.reader.deserializer.PulsarDeserializationSchema;
+import org.apache.flink.util.Collector;
+import org.apache.pulsar.client.api.Message;
 
 import static org.apache.flink.api.java.typeutils.TypeExtractor.getForClass;
 import static org.apache.paimon.flink.action.cdc.MessageQueueSchemaUtils.SCHEMA_REGISTRY_URL;
 
 /** A simple deserialization schema for {@link CdcSourceRecord}. */
 public class PulsarDebeziumAvroDeserializationSchema
-        implements DeserializationSchema<CdcSourceRecord> {
+        implements PulsarDeserializationSchema<CdcSourceRecord> {
 
     private static final long serialVersionUID = 1L;
 
@@ -50,29 +51,34 @@ public class PulsarDebeziumAvroDeserializationSchema
     }
 
     @Override
-    public void open(InitializationContext context) throws Exception {
+    public void open(PulsarInitializationContext context, SourceConfiguration configuration)
+            throws Exception {
         initAvroDeserializer();
     }
 
     @Override
-    public CdcSourceRecord deserialize(byte[] message) throws IOException {
-        if (message == null) {
-            return null;
+    public void deserialize(Message<byte[]> message, Collector<CdcSourceRecord> collector)
+            throws Exception {
+        byte[] data = message.getData();
+        if (data == null) {
+            // skip tombstone messages
+            return;
         }
 
         if (this.avroDeserializer == null) {
             initAvroDeserializer();
         }
 
+        GenericContainerWithVersion keyContainerWithVersion =
+                this.avroDeserializer.deserialize(topic, true, message.getKeyBytes());
         GenericContainerWithVersion valueContainerWithVersion =
-                this.avroDeserializer.deserialize(topic, false, message);
+                this.avroDeserializer.deserialize(topic, false, data);
+        GenericRecord key = null;
+        if (keyContainerWithVersion != null) {
+            key = (GenericRecord) keyContainerWithVersion.container();
+        }
         GenericRecord value = (GenericRecord) valueContainerWithVersion.container();
-        return new CdcSourceRecord(topic, null, value);
-    }
-
-    @Override
-    public boolean isEndOfStream(CdcSourceRecord nextElement) {
-        return false;
+        collector.collect(new CdcSourceRecord(topic, key, value));
     }
 
     @Override

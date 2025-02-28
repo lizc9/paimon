@@ -68,7 +68,7 @@ If a message in a Kafka topic is a change event captured from another database u
         <td>True</td>
         </tr>
         <tr>
-         <td><a href="{{< ref "/cdc-ingestion/debezium-bson" >}}">debezium-bson</a></td>
+         <td><a href="{{< ref "/cdc-ingestion/debezium-bson" >}}">Debezium-bson</a></td>
         <td>True</td>
         </tr>
     </tbody>

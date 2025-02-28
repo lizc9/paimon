@@ -22,8 +22,8 @@ import org.apache.paimon.flink.action.cdc.CdcSourceRecord;
 import org.apache.paimon.flink.action.cdc.ComputedColumn;
 import org.apache.paimon.flink.action.cdc.TypeMapping;
 
-import org.apache.flink.api.common.serialization.DeserializationSchema;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.connector.pulsar.source.reader.deserializer.PulsarDeserializationSchema;
 import org.apache.flink.streaming.connectors.kafka.KafkaDeserializationSchema;
 
 import java.util.List;
@@ -40,7 +40,7 @@ public abstract class AbstractDataFormat implements DataFormat {
             kafkaDeserializer();
 
     /** Deserializer for Pulsar Record. */
-    protected abstract Function<Configuration, DeserializationSchema<CdcSourceRecord>>
+    protected abstract Function<Configuration, PulsarDeserializationSchema<CdcSourceRecord>>
             pulsarDeserializer();
 
     @Override
@@ -56,7 +56,7 @@ public abstract class AbstractDataFormat implements DataFormat {
     }
 
     @Override
-    public DeserializationSchema<CdcSourceRecord> createPulsarDeserializer(
+    public PulsarDeserializationSchema<CdcSourceRecord> createPulsarDeserializer(
             Configuration cdcSourceConfig) {
         return pulsarDeserializer().apply(cdcSourceConfig);
     }

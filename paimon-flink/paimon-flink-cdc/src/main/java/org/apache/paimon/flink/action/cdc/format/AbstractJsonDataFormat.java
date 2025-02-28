@@ -20,10 +20,10 @@ package org.apache.paimon.flink.action.cdc.format;
 
 import org.apache.paimon.flink.action.cdc.CdcSourceRecord;
 import org.apache.paimon.flink.action.cdc.kafka.KafkaDebeziumJsonDeserializationSchema;
-import org.apache.paimon.flink.action.cdc.serialization.CdcJsonDeserializationSchema;
+import org.apache.paimon.flink.action.cdc.serialization.CdcJsonPulsarDeserializationSchema;
 
-import org.apache.flink.api.common.serialization.DeserializationSchema;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.connector.pulsar.source.reader.deserializer.PulsarDeserializationSchema;
 import org.apache.flink.streaming.connectors.kafka.KafkaDeserializationSchema;
 
 import java.util.function.Function;
@@ -41,7 +41,8 @@ public abstract class AbstractJsonDataFormat extends AbstractDataFormat {
     }
 
     @Override
-    protected Function<Configuration, DeserializationSchema<CdcSourceRecord>> pulsarDeserializer() {
-        return CdcJsonDeserializationSchema::new;
+    protected Function<Configuration, PulsarDeserializationSchema<CdcSourceRecord>>
+            pulsarDeserializer() {
+        return CdcJsonPulsarDeserializationSchema::new;
     }
 }

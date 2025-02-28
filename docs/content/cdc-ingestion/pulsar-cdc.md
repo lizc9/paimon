@@ -63,6 +63,10 @@ If a message in a pulsar topic is a change event captured from another database 
          <td><a href="https://nightlies.apache.org/flink/flink-docs-stable/docs/connectors/table/formats/json/">JSON</a></td>
         <td>True</td>
         </tr>
+        <tr>
+         <td><a href="{{< ref "/cdc-ingestion/debezium-bson" >}}">Debezium-bson</a></td>
+         <td>True</td>
+        </tr>
     </tbody>
 </table>
 

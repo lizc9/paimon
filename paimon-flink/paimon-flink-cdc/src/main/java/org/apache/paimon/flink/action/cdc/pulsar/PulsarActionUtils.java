@@ -36,6 +36,7 @@ import org.apache.flink.connector.pulsar.source.enumerator.cursor.StopCursor;
 import org.apache.flink.connector.pulsar.source.enumerator.subscriber.impl.TopicPatternSubscriber;
 import org.apache.flink.connector.pulsar.source.enumerator.topic.TopicPartition;
 import org.apache.flink.connector.pulsar.source.reader.PulsarPartitionSplitReader;
+import org.apache.flink.connector.pulsar.source.reader.deserializer.PulsarDeserializationSchema;
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.ConsumerBuilder;
 import org.apache.pulsar.client.api.KeySharedPolicy;
@@ -168,7 +169,7 @@ public class PulsarActionUtils {
 
     public static PulsarSource<CdcSourceRecord> buildPulsarSource(
             Configuration pulsarConfig,
-            DeserializationSchema<CdcSourceRecord> deserializationSchema) {
+            PulsarDeserializationSchema<CdcSourceRecord> deserializationSchema) {
         PulsarSourceBuilder<CdcSourceRecord> pulsarSourceBuilder = PulsarSource.builder();
 
         // the minimum setup
